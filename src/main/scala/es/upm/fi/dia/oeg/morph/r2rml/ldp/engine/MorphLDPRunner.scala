@@ -22,6 +22,8 @@ import com.hp.hpl.jena.sparql.algebra.OpAsQuery
 import es.upm.fi.dia.oeg.morph.r2rml.rdb.engine.MorphRDBRunner
 import es.upm.fi.dia.oeg.morph.r2rml.rdb.engine.MorphRDBUnfolder
 import es.upm.fi.dia.oeg.morph.r2rml.rdb.engine.MorphRDBDataTranslator
+import es.upm.fi.dia.oeg.morph.base.querytranslator.MorphBaseQueryTranslator
+import Zql.ZUpdate
 
 class MorphLDPRunner (mappingDocument:R2RMLMappingDocument
 //    , dataSourceReader:MorphBaseDataSourceReader
@@ -63,22 +65,7 @@ class MorphLDPRunner (mappingDocument:R2RMLMappingDocument
 	  this.materializeInstanceDetails(instanceURI, cms)
 	}
 	
-	def updateResource(resourceURI:String, resource:Resource) : IQuery = {
-		val statements = resource.listProperties().toList();
-		this.updateResource(resourceURI, statements);
-	}
-	
-	def updateResource(resourceURI:String, statements:Iterable[Statement]) : IQuery = {
-		val triples = statements.map(stmt => {
-			val obj = stmt.getObject().asNode()
-			val triple = Triple.create(stmt.getSubject().asNode(), stmt.getPredicate().asNode(), stmt.getObject().asNode());
-			triple 
-		})
-		val basicPattern = BasicPattern.wrap(triples.toList);
-		val bgp = new OpBGP(basicPattern);
-		
-		this.queryTranslator.get.translate(bgp)
-	}
+
 
 	def queryContainer(ldpRequest:String) = {
 		val cms = this.mappingDocument.getClassMappingsByInstanceTemplate(ldpRequest);
@@ -129,6 +116,46 @@ class MorphLDPRunner (mappingDocument:R2RMLMappingDocument
 
 	}
 
+	def updateResource(resource:Resource) : Unit = {
+		val statements = resource.listProperties().toList();
+		this.updateResource(statements);
+	}
 	
+	def updateResource(statements:Iterable[Statement]) : Unit = {
+		val triples = statements.map(stmt => {
+			val obj = stmt.getObject().asNode()
+			val triple = Triple.create(stmt.getSubject().asNode(), stmt.getPredicate().asNode(), stmt.getObject().asNode());
+			triple 
+		})
+		val basicPattern = BasicPattern.wrap(triples.toList);
+		val bgp = new OpBGP(basicPattern);
+		//val mbQueryTranslator = this.queryTranslator.get.asInstanceOf[MorphBaseQueryTranslator];
+		//val zUpdate = mbQueryTranslator.translateUpdate(bgp)
+		val zUpdate = this.queryTranslator.get.translateUpdate(bgp)
+		logger.info("zUpdate = \n" + zUpdate);
+		val dataSourceReader = this.dataTranslator.get.getDataSourceReader;
+		dataSourceReader.execute(zUpdate.toString());
+	}	
 
+	def createResource(resource:Resource) : Unit = {
+		val statements = resource.listProperties().toList();
+		this.createResource(statements);
+	}
+	
+	def createResource(statements:Iterable[Statement]) : Unit = {
+		val triples = statements.map(stmt => {
+			val obj = stmt.getObject().asNode()
+			val triple = Triple.create(stmt.getSubject().asNode(), stmt.getPredicate().asNode(), stmt.getObject().asNode());
+			triple 
+		})
+		val basicPattern = BasicPattern.wrap(triples.toList);
+		val bgp = new OpBGP(basicPattern);
+		//val mbQueryTranslator = this.queryTranslator.get.asInstanceOf[MorphBaseQueryTranslator];
+		//val zUpdate = mbQueryTranslator.translateUpdate(bgp)
+		val zInsert = this.queryTranslator.get.translateInsert(bgp)
+		logger.info("zInsert = \n" + zInsert);
+		val dataSourceReader = this.dataTranslator.get.getDataSourceReader;
+		dataSourceReader.execute(zInsert.toString());
+	}	
+	
 }
