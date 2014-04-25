@@ -157,5 +157,31 @@ class MorphLDPRunner (mappingDocument:R2RMLMappingDocument
 		val dataSourceReader = this.dataTranslator.get.getDataSourceReader;
 		dataSourceReader.execute(zInsert.toString());
 	}	
-	
+
+	def deleteResource(resourceURI:String) = {
+	  val cms = this.mappingDocument.getClassMappingsByInstanceURI(resourceURI);
+	  cms.foreach(cm => {
+		  val classURI = cm.getMappedClassURIs.iterator.next;
+		  val stgSubject = NodeFactory.createURI(resourceURI);
+		  val tp1Predicate = RDF.`type`.asNode();
+		  val tp1Object = NodeFactory.createURI(classURI);
+		  val tp1 = new Triple(stgSubject, tp1Predicate, tp1Object);
+
+		  val tp2Predicate = NodeFactory.createVariable("p");
+		  val tp2Object = NodeFactory.createVariable("o");
+		  val tp2 = new Triple(stgSubject, tp2Predicate, tp2Object);
+			
+		  //val basicPattern = BasicPattern.wrap(List(tp1, tp2));
+		  val basicPattern = BasicPattern.wrap(List(tp1));
+		  val bgp = new OpBGP(basicPattern);
+		  val varPredicate = Var.alloc(tp2Predicate);
+		  val varObject = Var.alloc(tp2Object);
+		  
+		  val zDelete = this.queryTranslator.get.translateDelete(bgp);
+		  logger.info("zDelete = \n" + zDelete);
+		  val dataSourceReader = this.dataTranslator.get.getDataSourceReader;
+		  dataSourceReader.execute(zDelete.toString());
+	  })
+
+	}
 }
