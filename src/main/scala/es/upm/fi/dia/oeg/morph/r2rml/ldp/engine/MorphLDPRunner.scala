@@ -1,7 +1,7 @@
 package es.upm.fi.dia.oeg.morph.r2rml.ldp.engine
 
 import scala.collection.JavaConversions._
-import es.upm.dia.fi.oeg.morph.r2rml.model.R2RMLMappingDocument
+import es.upm.fi.dia.oeg.morph.r2rml.model.R2RMLMappingDocument
 import es.upm.fi.dia.oeg.morph.base.engine.IQueryTranslator
 import es.upm.fi.dia.oeg.morph.base.engine.AbstractQueryResultTranslator
 import java.io.Writer
